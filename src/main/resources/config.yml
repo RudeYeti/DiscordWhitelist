@@ -1,0 +1,10 @@
+# DiscordWhitelist plugin created by Rude Yeti, Incorporated.
+# A simple plugin which allows synchronization from a Discord Channel
+# to a Minecraft Server, whitelisting the provided player names.
+# This depends on DiscordSRV, a requirement for this plugin to work.
+
+# General Configuration
+
+# The ID of the Discord Channel being used as a whitelist.
+# Default value: "##################"
+channel-id: "##################"
