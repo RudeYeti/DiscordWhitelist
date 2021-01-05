@@ -26,11 +26,18 @@ public class JDAListener extends ListenerAdapter {
             AccountLinkManager accountLinkManager = DiscordSRV.getPlugin().getAccountLinkManager();
 
             if (event.getChannel().getId().equals(Config.channelId)) {
+                for (String string : Config.blacklist) {
+                    if (string.equals(messageContent)) {
+                        message.delete().queue();
+                        return;
+                    }
+                }
+
                 if (Player.exists(messageContent)) {
                     OfflinePlayer offlinePlayer = DiscordWhitelist.server.getOfflinePlayer(messageContent);
 
                     if (offlinePlayer.isWhitelisted()) {
-                        message.addReaction("🤷").queue();
+                        message.delete().queue();
                     } else {
                         offlinePlayer.setWhitelisted(true);
                         DiscordWhitelist.server.reloadWhitelist();
@@ -45,7 +52,7 @@ public class JDAListener extends ListenerAdapter {
                 }
             } else if (messageContent.startsWith(Config.command)) {
                 if (messageContent.equals(Config.command) || !messageContent.startsWith(Config.command + " ")) {
-                    message.getTextChannel().sendMessage("**Usage:** `" + Config.command + " <discord-id | minecraft-username>`").queue();
+                    message.getTextChannel().sendMessage("Usage: `" + Config.command + " <discord-id | minecraft-username>`").queue();
                 } else {
                     String user = messageContent.replace(Config.command + " ", "");
 
@@ -58,7 +65,7 @@ public class JDAListener extends ListenerAdapter {
                             OfflinePlayer offlinePlayer = DiscordWhitelist.server.getOfflinePlayer(minecraftUuid);
 
                             if (Player.exists(offlinePlayer.getName()) && offlinePlayer.getName() != null) {
-                                message.getTextChannel().sendMessage("**Minecraft Username:** `" + offlinePlayer.getName() + "`").queue();
+                                message.getTextChannel().sendMessage("Minecraft Username: `" + offlinePlayer.getName() + "`").queue();
                                 return;
                             }
                         }
@@ -70,7 +77,7 @@ public class JDAListener extends ListenerAdapter {
                             Member member = DiscordWhitelist.guild.getMemberById(discordId);
 
                             if (member != null) {
-                                message.getTextChannel().sendMessage("**Discord Username:** `" + member.getUser().getAsTag() + "`").queue();
+                                message.getTextChannel().sendMessage("Discord Username: `" + member.getUser().getAsTag() + "`").queue();
                                 return;
                             }
                         }
@@ -95,12 +102,17 @@ public class JDAListener extends ListenerAdapter {
                     if (Player.exists(message.getContentRaw()) && offlinePlayer.isWhitelisted()) {
                         offlinePlayer.setWhitelisted(false);
                         DiscordWhitelist.server.reloadWhitelist();
-                        message.removeReaction("✅").queue();
-                        message.addReaction("❌").queue();
 
                         if (Config.linkAccounts) {
                             DiscordSRV.getPlugin().getAccountLinkManager().unlink(event.getUser().getId());
                         }
+                    }
+
+                    if (Config.deleteOnLeave) {
+                        message.delete().queue();
+                    } else {
+                        message.removeReaction("✅").queue();
+                        message.addReaction("❌").queue();
                     }
                 }
 

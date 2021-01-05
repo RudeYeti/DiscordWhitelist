@@ -16,3 +16,13 @@ channel-id: "##################"
 # Whether to link the accounts through DiscordSRV when whitelisting.
 # Default value: true
 link-accounts: true
+
+# Whether to delete the whitelist message when a user leaves the Discord Server.
+# If this is set to false, then a red x appears on the message instead.
+# Default value: true
+delete-on-leave: true
+
+# A blacklist of usernames not allowed to be in the whitelist.
+# Default value: - ""
+blacklist:
+  - ""

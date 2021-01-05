@@ -4,6 +4,7 @@ import github.scarsz.discordsrv.DiscordSRV;
 import github.scarsz.discordsrv.dependencies.jda.api.entities.Guild;
 import github.scarsz.discordsrv.dependencies.jda.api.requests.GatewayIntent;
 import github.scarsz.discordsrv.util.DiscordUtil;
+import io.github.rudeyeti.discordwhitelist.commands.DiscordWhitelistCommand;
 import io.github.rudeyeti.discordwhitelist.listeners.DiscordSRVListener;
 import io.github.rudeyeti.discordwhitelist.listeners.JDAListener;
 import org.bukkit.Server;
@@ -41,6 +42,8 @@ public final class DiscordWhitelist extends JavaPlugin {
         if (!server.hasWhitelist()) {
             server.setWhitelist(true);
         }
+
+        this.getCommand("discordwhitelist").setExecutor(new DiscordWhitelistCommand());
 
         DiscordSRV.api.requireIntent(GatewayIntent.GUILD_MESSAGES);
         DiscordSRV.api.subscribe(new DiscordSRVListener());

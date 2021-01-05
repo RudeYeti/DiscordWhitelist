@@ -5,3 +5,7 @@ depend: [DiscordSRV]
 author: Rude Yeti, Incorporated
 load: POSTWORLD
 description: ${project.description}
+commands:
+  discordwhitelist:
+    description: discordwhitelist
+    aliases: [dw]
