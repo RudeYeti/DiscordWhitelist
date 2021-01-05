@@ -6,19 +6,29 @@ public class Config {
 
     public static Configuration config;
     public static String channelId;
+    public static String command;
+    public static boolean linkAccounts;
 
     public static void updateConfig() {
         config = DiscordWhitelist.plugin.getConfig();
         channelId = config.getString("channel-id");
+        command = config.getString("command");
+        linkAccounts = config.getBoolean("link-accounts");
+    }
+
+    private static String message(String option, String message) {
+        return "The " + option + " value in the configuration must be " + message;
     }
 
     public static boolean validateConfig() {
-        String channelIdMessage = "The channel-id value in the configuration must be ";
-
         if (!(config.get("channel-id") instanceof String)) {
-            DiscordWhitelist.logger.warning(channelIdMessage + "enclosed in quotes.");
+            DiscordWhitelist.logger.warning(message("channel-id", "enclosed in quotes."));
         } else if (config.get("channel-id").equals("##################")) {
-            DiscordWhitelist.logger.warning(channelIdMessage + "modified from ##################.");
+            DiscordWhitelist.logger.warning(message("channel-id", "modified from ##################."));
+        } else if (!(config.get("command") instanceof String)) {
+            DiscordWhitelist.logger.warning(message("command", "enclosed in quotes."));
+        } else if (!(config.get("link-accounts") instanceof Boolean)) {
+            DiscordWhitelist.logger.warning(message("link-accounts", "either true or false."));
         } else {
             return true;
         }

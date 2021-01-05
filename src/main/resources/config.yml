@@ -5,6 +5,14 @@
 
 # General Configuration
 
+# The command used to determine if Minecraft and Discord Accounts are linked.
+# Default value: "!check"
+command: "!check"
+
 # The ID of the Discord Channel being used as a whitelist.
 # Default value: "##################"
 channel-id: "##################"
+
+# Whether to link the accounts through DiscordSRV when whitelisting.
+# Default value: true
+link-accounts: true
