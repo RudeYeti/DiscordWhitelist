@@ -1,4 +1,4 @@
-package io.github.rudeyeti.discordwhitelist.commands.discordwhitelist;
+package io.github.rudeyeti.discordwhitelist.commands.minecraft.discordwhitelist;
 
 import io.github.rudeyeti.discordwhitelist.DiscordWhitelist;
 import org.bukkit.command.CommandSender;

@@ -1,7 +1,7 @@
-package io.github.rudeyeti.discordwhitelist.commands;
+package io.github.rudeyeti.discordwhitelist.commands.minecraft;
 
-import io.github.rudeyeti.discordwhitelist.commands.discordwhitelist.InfoSubcommand;
-import io.github.rudeyeti.discordwhitelist.commands.discordwhitelist.ReloadSubcommand;
+import io.github.rudeyeti.discordwhitelist.commands.minecraft.discordwhitelist.InfoSubcommand;
+import io.github.rudeyeti.discordwhitelist.commands.minecraft.discordwhitelist.ReloadSubcommand;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;

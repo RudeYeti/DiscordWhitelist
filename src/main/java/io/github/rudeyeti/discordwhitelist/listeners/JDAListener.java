@@ -1,34 +1,47 @@
 package io.github.rudeyeti.discordwhitelist.listeners;
 
 import github.scarsz.discordsrv.DiscordSRV;
-import github.scarsz.discordsrv.dependencies.jda.api.entities.Member;
 import github.scarsz.discordsrv.dependencies.jda.api.entities.Message;
 import github.scarsz.discordsrv.dependencies.jda.api.entities.TextChannel;
 import github.scarsz.discordsrv.dependencies.jda.api.events.guild.member.GuildMemberRemoveEvent;
 import github.scarsz.discordsrv.dependencies.jda.api.events.message.guild.GuildMessageReceivedEvent;
 import github.scarsz.discordsrv.dependencies.jda.api.hooks.ListenerAdapter;
 import github.scarsz.discordsrv.objects.managers.AccountLinkManager;
-import github.scarsz.discordsrv.util.DiscordUtil;
 import io.github.rudeyeti.discordwhitelist.Config;
 import io.github.rudeyeti.discordwhitelist.DiscordWhitelist;
 import io.github.rudeyeti.discordwhitelist.Player;
+import io.github.rudeyeti.discordwhitelist.commands.discord.CheckCommand;
 import org.bukkit.OfflinePlayer;
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.UUID;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+
+import java.util.concurrent.TimeUnit;
 
 public class JDAListener extends ListenerAdapter {
+
+    public static Message message;
+    public static TextChannel textChannel;
+    public static String messageContent;
+    public static AccountLinkManager accountLinkManager = DiscordSRV.getPlugin().getAccountLinkManager();
+
     @Override
     public void onGuildMessageReceived(@NotNull GuildMessageReceivedEvent event) {
-        if (event.getGuild() == DiscordWhitelist.guild) {
-            Message message = event.getMessage();
-            String messageContent = message.getContentRaw();
-            AccountLinkManager accountLinkManager = DiscordSRV.getPlugin().getAccountLinkManager();
+        if (event.getGuild() == DiscordWhitelist.guild && !event.getAuthor().isBot()) {
+            message = event.getMessage();
+            textChannel = message.getTextChannel();
+            messageContent = message.getContentRaw();
 
             if (event.getChannel().getId().equals(Config.channelId)) {
                 for (String string : Config.blacklist) {
                     if (string.equals(messageContent)) {
                         message.delete().queue();
+                        textChannel.sendMessage("The specified user `" + messageContent + "` is blacklisted.").queue((message) -> {
+                            message.delete().queueAfter(3, TimeUnit.SECONDS);
+                        });
                         return;
                     }
                 }
@@ -38,53 +51,48 @@ public class JDAListener extends ListenerAdapter {
 
                     if (offlinePlayer.isWhitelisted()) {
                         message.delete().queue();
+                        textChannel.sendMessage("The specified user `" + messageContent + "` is already whitelisted.").queue((message) -> {
+                            message.delete().queueAfter(3, TimeUnit.SECONDS);
+                        });
                     } else {
                         offlinePlayer.setWhitelisted(true);
                         DiscordWhitelist.server.reloadWhitelist();
                         message.addReaction("✅").queue();
+                    }
 
-                        if (Config.linkAccounts) {
+                    if (Config.linkAccounts) {
+                        if (DiscordSRV.config().getBoolean("GroupRoleSynchronizationOnLink")) {
+                            try {
+                                File dataFolder = DiscordSRV.getPlugin().getDataFolder();
+                                File file = new File(dataFolder, "synchronization.yml");
+                                File backup = new File(dataFolder, "synchronization.yml.old");
+                                YamlConfiguration config = YamlConfiguration.loadConfiguration(file);
+
+                                Files.copy(file.toPath(), backup.toPath());
+                                config.set("GroupRoleSynchronizationOnLink", false);
+                                config.save(file);
+                                DiscordSRV.getPlugin().reloadConfig();
+
+                                accountLinkManager.link(event.getAuthor().getId(), offlinePlayer.getUniqueId());
+
+                                Files.delete(file.toPath());
+                                backup.renameTo(file);
+                                DiscordSRV.getPlugin().reloadConfig();
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+                        } else {
                             accountLinkManager.link(event.getAuthor().getId(), offlinePlayer.getUniqueId());
                         }
                     }
                 } else {
                     message.delete().queue();
+                    textChannel.sendMessage("The specified user `" + messageContent + "` is not an actual player.").queue((message) -> {
+                        message.delete().queueAfter(3, TimeUnit.SECONDS);
+                    });
                 }
-            } else if (messageContent.startsWith(Config.command)) {
-                if (messageContent.equals(Config.command) || !messageContent.startsWith(Config.command + " ")) {
-                    message.getTextChannel().sendMessage("Usage: `" + Config.command + " <discord-id | minecraft-username>`").queue();
-                } else {
-                    String user = messageContent.replace(Config.command + " ", "");
-
-                    try {
-                        DiscordUtil.getJda().getUserById(user);
-
-                        UUID minecraftUuid = accountLinkManager.getUuid(user);
-
-                        if (minecraftUuid != null) {
-                            OfflinePlayer offlinePlayer = DiscordWhitelist.server.getOfflinePlayer(minecraftUuid);
-
-                            if (Player.exists(offlinePlayer.getName()) && offlinePlayer.getName() != null) {
-                                message.getTextChannel().sendMessage("Minecraft Username: `" + offlinePlayer.getName() + "`").queue();
-                                return;
-                            }
-                        }
-                    } catch (NumberFormatException error) {
-                        OfflinePlayer offlinePlayer = DiscordWhitelist.server.getOfflinePlayer(user);
-                        String discordId = accountLinkManager.getDiscordId(offlinePlayer.getUniqueId());
-
-                        if (discordId != null) {
-                            Member member = DiscordWhitelist.guild.getMemberById(discordId);
-
-                            if (member != null) {
-                                message.getTextChannel().sendMessage("Discord Username: `" + member.getUser().getAsTag() + "`").queue();
-                                return;
-                            }
-                        }
-                    }
-
-                    message.getTextChannel().sendMessage("The specified user could not be found.").queue();
-                }
+            } else {
+                CheckCommand.execute();
             }
         }
     }
@@ -99,19 +107,21 @@ public class JDAListener extends ListenerAdapter {
                 if (message.getAuthor().getId().equals(event.getUser().getId())) {
                     OfflinePlayer offlinePlayer = DiscordWhitelist.server.getOfflinePlayer(message.getContentRaw());
 
-                    if (Player.exists(message.getContentRaw()) && offlinePlayer.isWhitelisted()) {
+                    if (Player.exists(message.getContentRaw())) {
                         offlinePlayer.setWhitelisted(false);
                         DiscordWhitelist.server.reloadWhitelist();
 
                         if (Config.linkAccounts) {
-                            DiscordSRV.getPlugin().getAccountLinkManager().unlink(event.getUser().getId());
+                            accountLinkManager.unlink(event.getUser().getId());
                         }
                     }
 
                     if (Config.deleteOnLeave) {
                         message.delete().queue();
                     } else {
-                        message.removeReaction("✅").queue();
+                        message.getReactions().forEach((reaction) ->
+                                reaction.removeReaction().queue()
+                        );
                         message.addReaction("❌").queue();
                     }
                 }

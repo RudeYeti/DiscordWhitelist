@@ -1,4 +1,4 @@
-package io.github.rudeyeti.discordwhitelist.commands.discordwhitelist;
+package io.github.rudeyeti.discordwhitelist.commands.minecraft.discordwhitelist;
 
 import io.github.rudeyeti.discordwhitelist.Config;
 import io.github.rudeyeti.discordwhitelist.DiscordWhitelist;
@@ -8,7 +8,7 @@ import org.bukkit.configuration.Configuration;
 
 public class ReloadSubcommand {
     public static void execute(CommandSender sender) {
-        if (sender.hasPermission("shortcut.reload") || sender.isOp()) {
+        if (sender.hasPermission("discordwhitelist.reload") || sender.isOp()) {
             Configuration oldConfig = Config.config;
             DiscordWhitelist.plugin.reloadConfig();
             DiscordWhitelist.server.reloadWhitelist();
